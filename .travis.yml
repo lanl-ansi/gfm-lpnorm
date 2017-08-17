@@ -1,0 +1,12 @@
+language: java
+ 
+os:
+  - linux
+ 
+jdk:
+  - oraclejdk8
+ 
+script: "mvn cobertura:cobertura"
+   
+after_success:
+  - bash <(curl -s https://cov.lanlytics.com/bash) -t kqk5rfvusWga7PTzZ9cM 
