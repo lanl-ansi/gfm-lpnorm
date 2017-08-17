@@ -1,0 +1,22 @@
+*.class
+
+# directories #
+/target/
+/.idea/
+
+# Package Files #
+*.jar
+*.war
+*.impl
+*.log
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Ignore IntelliJ and Eclipse project files. #
+.settings
+.classpath
+.project
+.iws
+.iml
