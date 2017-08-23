@@ -1,333 +1,331 @@
 package gov.lanl.nisac.fragility.lpnorm;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import gov.lanl.nisac.fragility.assets.IAsset;
-import gov.lanl.nisac.fragility.io.*;
-import gov.lanl.nisac.fragility.lpnorm.PoleJson.*;
-import gov.lanl.nisac.fragility.lpnorm.RDTJson.*;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.*;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
-
+import java.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gov.lanl.nisac.fragility.FragilityCommandLineParser;
 import gov.lanl.nisac.fragility.responseModels.IResponse;
+import javax.json.*;
+import javax.json.stream.JsonGenerator;
+import static gov.lanl.nisac.fragility.lpnorm.PoleConstants.*;
+import static javax.json.Json.createArrayBuilder;
+
 
 /**
  * Created by 301338 on 8/2/2017.
  */
-class RDTWork {
+public class RDTWork {
 
-    private static RDTData rdt;
     private static String windFieldPathLocation;
     private static FragilityCommandLineParser clp;
     private int numberOfScenarios = 1;
-
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final JsonFactory jsonFactory = new JsonFactory();
-    private static PoleData polesData;
+    private static HashMap<String, List<Double>> nodeLocation;
+    private static Map<String, Object> config = new HashMap<String, Object>();
+    private static JsonBuilderFactory factory;
+    private static JsonObjectBuilder distributionPoles;
+    private static JsonArrayBuilder polesArray;
+    private static JsonArrayBuilder hazardFieldsArray;
+    private static JsonArrayBuilder responseEstimatorsArray;
+    private static JsonArrayBuilder scenarioArray;
+    private static JsonNode newPolesJSON;
+    private static JsonNode rdtNodes;
     private static final String RDT_TO_POLES = "RDT-to-Poles.json";
+    private static final String RDT_W_SCENARIO = "rdt_OUTPUT.json";
 
-    private AssetDataStore assetDataStore;
+    public RDTWork(String rdtDataFilePath, FragilityCommandLineParser cmdLine) {
 
-
-    RDTWork(String filePath, FragilityCommandLineParser cmdLine) {
-        System.out.println("RDT data option enabled ...");
         clp = cmdLine;
         windFieldPathLocation = clp.getWindFieldInputPath();
 
-        if (clp.isNumScenarios()){
+        if (clp.isNumScenarios()) {
             numberOfScenarios = clp.getNumberOfScenarios();
         }
 
-        readRDT(filePath);
-        inferPoleData();
-        defineHazardResponseEstimator();
-        writePoleData(RDT_TO_POLES);
+        System.out.println("RDT data option enabled ...");
+        initiateProcedure();
+        processData(rdtDataFilePath);
+        writePoleData();
     }
 
-    private static void readRDT(String filePath) {
+    private static void setRdtNodes(JsonNode rdtNodes) {
+        RDTWork.rdtNodes = rdtNodes;
+    }
 
-        try {
-            rdt = objectMapper.readValue(new File(filePath), RDTData.class);
-        } catch (IOException e) {
-            System.out.println("Could not read template RDT input file");
-            e.printStackTrace();
-        }
+    private void processData(String rdtDataFilePath) {
+        inferPoleData(rdtDataFilePath);
+        distributionPoles.add("assets", polesArray);
+
+        createHazardFields();
+        distributionPoles.add("hazardFields", hazardFieldsArray);
+
+        createResponseEstimator();
+        distributionPoles.add("responseEstimators", responseEstimatorsArray);
 
     }
 
-    private static PoleAssets definePole(int id, String line, double[] coord) {
+    private static void initiateProcedure() {
+        config.put(JsonGenerator.PRETTY_PRINTING, true);
+        factory = Json.createBuilderFactory(config);
 
-        PoleAssets pole = new PoleAssets();
-        PoleProperties poleProperty = new PoleProperties();
+        distributionPoles = factory.createObjectBuilder();
+        polesArray = createArrayBuilder();
+        hazardFieldsArray = createArrayBuilder();
+        responseEstimatorsArray = createArrayBuilder();
 
-        pole.setAssetGeometry(new PoleAssetGeometry());
-        pole.getAssetGeometry().setCoordinates(coord);
-        pole.getAssetGeometry().setType("Point");
-        pole.setAssetClass("PowerDistributionPole");
-        pole.setId(String.valueOf(id));
-
-        pole.setProperties(poleProperty);
-        poleProperty.setLineId(line);
-        poleProperty.setPowerCircuitName(String.valueOf(id));
-
-        return pole;
+        scenarioArray = createArrayBuilder();
     }
 
-    private void inferPoleData() {
-
-        System.out.println("Producing generic pole data ...");
-        this.assetDataStore = new AssetDataStore();
-
-        List<RDTLines> rdtline = rdt.getLines();
-        HashMap<String, String> nodeToLine = new HashMap<>();
-
-        for (RDTLines lid : rdtline) {
-            nodeToLine.put(lid.getNode1_id(), lid.getId());
-            nodeToLine.put(lid.getNode2_id(), lid.getId());
-        }
-
-        List<RDTBuses> rdtbuses = rdt.getBuses();
-        List<PoleAssets> assets = new ArrayList<>();
-        PoleAssets npa;
-
-        HashMap<String, List<Double>> ht = new HashMap<>();
-        int id_count = 0;
-        String bid;
-
-        // defining a pole at each bus location
-        for (RDTBuses bus : rdtbuses) {
-            bid = bus.getId();
-            ht.put(bid, new ArrayList<Double>());
-            // Double
-            ht.get(bid).add(bus.getX());
-            ht.get(bid).add(bus.getY());
-
-            try {
-
-                String busId = nodeToLine.get(bus.getId());
-                npa = definePole(id_count, busId, new double[]{bus.getX(), bus.getY()});
-                assets.add(npa);
-                String npastr = objectMapper.writeValueAsString(npa);
-                JsonParser jp = jsonFactory.createParser(npastr);
-                AssetData aData = objectMapper.readValue(jp, AssetData.class);
-                IAsset asset = aData.createAsset();
-                assetDataStore.addAsset(asset);
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            id_count += 1;
-        }// end for
-
-        // ------- now adding poles between buses -------
-        String node1;
-        String node2;
-        String lid;
+    private static void inferPoleData(String filePath) {
+        InputStream inStream;
+        nodeLocation = new HashMap<>();
+        double xValue, yValue, ndist, numPoles;
         double v1, v2, x0, y0;
-        double ndist, numPoles;
+        String node1, node2, sid;
+        int id_count = 0;
 
+        try {
+            inStream = new FileInputStream(filePath);
+            setRdtNodes(objectMapper.readTree(inStream));
 
-        for (RDTLines line : rdtline) {
-            node1 = line.getNode1_id();
-            node2 = line.getNode2_id();
-            x0 = ht.get(node1).get(0);
-            y0 = ht.get(node1).get(1);
+            for (JsonNode n : rdtNodes.findValue("buses")) {
+                sid = String.valueOf(n.get("id").asText());
+                xValue = n.get("x").doubleValue();
+                yValue = n.get("y").doubleValue();
 
-            v1 = ht.get(node2).get(0) - ht.get(node1).get(0);
-            v2 = ht.get(node2).get(1) - ht.get(node1).get(1);
-            ndist = Math.sqrt(v1 * v1 + v2 * v2);
-
-            // normalized vector
-            v1 = v1 / ndist;
-            v2 = v2 / ndist;
-
-            // using 111.111 km per degree or 111,111 meters
-            // pole spacing at 91 meters 0.000817463169242 degrees
-            // 0.000817463169242
-            numPoles = Math.floor(ndist * 111111) / 91.0;
-            numPoles = Math.floor(numPoles);
-
-            for (int i = 0; i < numPoles; i++) {
-                lid = line.getId();
-
-                try {
-                    npa = definePole(id_count, lid, new double[]{x0, y0});
-                    assets.add(npa);
-
-                    String npastr = objectMapper.writeValueAsString(npa);
-                    JsonParser jp = jsonFactory.createParser(npastr);
-
-                    AssetData aData = objectMapper.readValue(jp, AssetData.class);
-                    IAsset asset = aData.createAsset();
-                    assetDataStore.addAsset(asset);
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                // move next pole location
-                x0 = x0 + v1 * 0.000817463169242;
-                y0 = y0 + v2 * 0.000817463169242;
-                id_count = id_count + 1;
-
+                nodeLocation.put(sid, new ArrayList<>());
+                nodeLocation.get(sid).add(xValue);
+                nodeLocation.get(sid).add(yValue);
             }
-            // spacing at 91 meters ~ 300 ft
-        }// end for
 
-        System.out.println("Number of poles created: " + assets.size());
-        polesData = new PoleData();
-        polesData.setAssets(assets);
+            // create poles for each line segment
+            for (JsonNode n : rdtNodes.findValue("lines")) {
+                sid = String.valueOf(n.get("id").asText());
+                node1 = String.valueOf(n.get("node1_id").asText());
+                node2 = String.valueOf(n.get("node2_id").asText());
 
-    }
+                x0 = nodeLocation.get(node1).get(0);
+                y0 = nodeLocation.get(node1).get(1);
 
-    private static void defineHazardResponseEstimator() {
+                // get lat/lon values
+                v1 = nodeLocation.get(node2).get(0) - nodeLocation.get(node1).get(0);
+                v2 = nodeLocation.get(node2).get(1) - nodeLocation.get(node1).get(1);
 
-        String urlpath = null;
-        try {
-            urlpath = String.valueOf(new File(System.getProperty("user.dir")).toURI().toURL());
-            urlpath = urlpath.substring(6);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+                ndist = Math.sqrt(v1 * v1 + v2 * v2);
 
-        urlpath = urlpath + windFieldPathLocation;
+                // v = (x1,y1) - (x2,y2)
+                // normalized vector u = v  / ||v||
+                // now point distance is along line (x1,y1) + du =
+                v1 = v1 / ndist;
+                v2 = v2 / ndist;
 
-        List<PoleHazardFields> poleHazardFieldList = new ArrayList<>();
-        PoleHazardFields phf = new PoleHazardFields();
-        phf.setRasterFieldData(new PoleRasterFieldData());
-        phf.getRasterFieldData().setCrsCode("EPSG:4326");
-        phf.getRasterFieldData().setGridFormat("ArcGrid");
-        phf.getRasterFieldData().setnBands(1);
-        phf.getRasterFieldData().setRasterBand(1);
-        phf.getRasterFieldData().setValueType("double");
-        phf.getRasterFieldData().setUri("file:///" + urlpath);
-        phf.setId("Fragility-generated-ID");
+                // using 111.111 km per degree (or 111,111 meters)
+                // pole spacing at 91 meters 0.000817463169242 degrees
+                // 0.000817463169242
+                numPoles = Math.floor(ndist * DEG_TO_METERS) / POLE_SPACING;
+                numPoles = Math.floor(numPoles);
 
-        List<PoleResponseEstimators> poleRespEstList = new ArrayList<>();
-        PoleResponseEstimators pr = new PoleResponseEstimators();
-        pr.setId("PowerPoleWindStressEstimator");
-        pr.setResponseEstimatorClass("PowerPoleWindStressEstimator");
-        pr.setAssetClass("PowerDistributionPole");
-        pr.setProperties(new PoleResponseEstimatorsProperties());
+                for (int i = 0; i < numPoles; i++) {
+                    createPoleAsset(id_count, sid, new double[]{x0, y0});
 
-        List<String> ls = new ArrayList<>();
-        ls.add("Windspeed");
-        pr.setHazardQuantityTypes(ls);
-        pr.setResponseQuantityType("DamageProbability");
-        poleRespEstList.add(pr);
-
-        phf.setHazardQuantityType("Windspeed");
-        poleHazardFieldList.add(phf);
-        polesData.setResponseEstimators(poleRespEstList);
-        polesData.setHazardFields(poleHazardFieldList);
-
-        // Fragility's hazard class
-        HazardFieldData hdf = new HazardFieldData();
-        hdf.setRasterFieldData(new RasterFieldData());
-        hdf.getRasterFieldData().setUri("file:///" + urlpath);
-        hdf.getRasterFieldData().setnBands(1);
-        hdf.getRasterFieldData().setRasterBand(1);
-        hdf.getRasterFieldData().setCrsCode("EPSG:4326");
-        hdf.setHazardQuantityType("Windspeed");
-        hdf.getRasterFieldData().setGridFormat("ArcGrid");
-        hdf.getRasterFieldData().setValueType(Double.class);
-        hdf.setId("Fragility-TesGrid");
-
-    }
-
-    private static void writePoleData(String fileName) {
-
-        try {
-            FileOutputStream os = new FileOutputStream(fileName);
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(os, polesData);
-            os.close();
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            System.out.println("RDT JSON processing issue.");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+                    // move to next pole location
+                    x0 = x0 + v1 * NEXT_DISTANCE;
+                    y0 = y0 + v2 * NEXT_DISTANCE;
+                    id_count = id_count + 1;
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("Could not write RDT input.");
+        }
+        System.out.println("Number of poles created: " + id_count);
+    }
+
+    private static void createPoleAsset(int id, String line, double[] coord) {
+
+        JsonObject poleJson = factory.createObjectBuilder()
+                .add("assetClass", ASSET_CLASS)
+                .add("assetGeometry", factory.createObjectBuilder()
+                        .add("coordinates", factory.createArrayBuilder()
+                                .add(coord[0])
+                                .add(coord[1]))
+                        .add("type", GEOMETRY_TYPE))
+                .add("id", String.valueOf(id))
+                .add("properties", factory.createObjectBuilder()
+                        .add("baseDiameter", BASE_DIAMETER)
+                        .add("cableSpan", CABLE_SPAN)
+                        .add("commAttachmentHeight", COMM_ATTACHMENT_HEIGHT)
+                        .add("commCableDiameter", COMM_CABLE_DIAMETER)
+                        .add("commCableNumber", COMM_CABLE_NUMBER)
+                        .add("commCableWireDensity", COMM_CABLE_WIRE_DENSITY)
+                        .add("height", HEIGHT)
+                        .add("meanPoleStrength", MEAN_POLE_STRENGTH)
+                        .add("powerAttachmentHeight", POWER_ATTACHMENT_HEIGHT)
+                        .add("powerCableDiameter", POWER_CABLE_DIAMETER)
+                        .add("powerCableNumber", POWER_CABLE_NUMBER)
+                        .add("powerCableWireDensity", POWER_CABLE_WIRE_DENSITY)
+                        .add("powerCircuitName", POWER_CIRCUIT_NAME)
+                        .add("stdDevPoleStrength", STD_DEV_POLE_STRENGTH)
+                        .add("topDiameter", TOP_DIAMETER)
+                        .add("woodDensity", WOOD_DENSITY)
+                        .add("lineId", line)
+                ).build();
+
+        polesArray.add(poleJson);
+
+    }
+
+    private static void createHazardFields() {
+
+        String uriFile = null;
+
+        try {
+            uriFile = String.valueOf(new File(System.getProperty("user.dir")).toURI().toURL());
+        } catch (MalformedURLException e) {
+            System.out.println("couldn't get active directory path");
+            e.printStackTrace();
+        }
+        uriFile = uriFile + windFieldPathLocation;
+
+        JsonObject hazardField = factory.createObjectBuilder()
+                .add("id", HAZ_ID)
+                .add("hazardQuantityType", HAZARD_QUANTITY_TYPE)
+                .add("rasterFieldData", factory.createObjectBuilder()
+                        .add("uri", uriFile)
+                        .add("gridFormat", HAZ_GRID_FORMAT)
+                        .add("crsCode", HAZ_CRS_CODE)
+                        .add("nBands", HAZ_NUMBER_OF_BANDS)
+                        .add("rasterBand", HAZ_RASTER_BAND)
+                        .add("valueType", HAZ_VALUE_TYPE)
+                ).build();
+
+        hazardFieldsArray.add(hazardField);
+    }
+
+    private static void createResponseEstimator() {
+
+        JsonObject responseEstimators = factory.createObjectBuilder()
+                .add("id", RSP_ID)
+                .add("responseEstimatorClass", RSP_ESTIMATOR_CLASS)
+                .add("assetClass", RSP_ASSET_CLASS)
+                .add("hazardQuantityTypes", factory.createArrayBuilder().add(RSP_HAZ_QUANTITY_TYPE))
+                .add("responseQuantityType", RSP_QUANTITY_TYPE)
+                .add("properties", factory.createObjectBuilder()
+                ).build();
+
+        responseEstimatorsArray.add(responseEstimators);
+
+    }
+
+    private static void createScenarioBlock(List<String> lineIds, int id) {
+
+        JsonArrayBuilder disabledLines = factory.createArrayBuilder();
+
+        for(String s : lineIds){
+            disabledLines.add(s);
+        }
+
+        JsonObject scenarioBlock = factory.createObjectBuilder()
+                .add("id",String.valueOf(id))
+                .add("hardened_disabled_lines", factory.createArrayBuilder())
+                .add("disable_lines", disabledLines)
+        .build();
+
+        scenarioArray.add(scenarioBlock);
+
+    }
+
+    private static void writePoleData() {
+
+        String jsonString = distributionPoles.build().toString();
+
+        try (FileWriter file = new FileWriter(RDT_TO_POLES)) {
+            Object json = objectMapper.readValue(jsonString, Object.class);
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, json);
+            file.close();
+            setNewPoles(objectMapper.readTree(jsonString));
+
+        } catch (IOException e) {
+            System.out.println("Couldn't write Pole Assets to JSON file.");
+            e.printStackTrace();
         }
 
     }
 
-    void generateScenarios(List<IResponse> rspData) {
+    public static JsonNode getNewPoles() {
+        return newPolesJSON;
+    }
+
+    private static void setNewPoles(JsonNode newPoles) {
+        RDTWork.newPolesJSON = newPoles;
+    }
+
+    public void generateScenarios(List<IResponse> rspData) {
         int timeCt = 0;
-        RDTScenarios scene;
         List<String> lineIds;
         Random r = new Random();
-        List<RDTScenarios> lscenario = new ArrayList<>();
+        String uniqueId,lineId, keyId;
 
-        String uniqueId;
-        String damagedLine;
+        HashMap<String, String> nodesToLines = new HashMap<>();
+        JsonNode poleAssets = getNewPoles();
+        JsonNode poleAssetList = poleAssets.findValue("assets");
 
-        HashMap<String, String> poleToLine = new HashMap<>();
-        HashMap<List<String>, String> nodesmap = new HashMap<>();
-        List<String> ns;
+        for (JsonNode n : poleAssetList) {
 
+            keyId = n.get("id").asText();
+            JsonNode properities = n.findValue("properties");
+            lineId = properities.get("lineId").asText();
 
-        for(RDTLines line: rdt.getLines()){
-            ns = new ArrayList<>();
-            ns.add(line.getId());
-            nodesmap.put(ns, line.getId());
+            if (!nodesToLines.containsKey(keyId)) {
+                nodesToLines.put(keyId, lineId);
+            } else {
+                System.out.print("- duplicate id : " + keyId);
+            }
         }
 
-        for (PoleAssets pa : polesData.getAssets()) {
-            poleToLine.put(pa.getId(), pa.getProperties().getLineId());
-        }
-
-        do {
-
+        // generating scenarios
+        do{
             lineIds = new ArrayList<>();
-            scene = new RDTScenarios();
 
             for (IResponse rd : rspData) {
-
                 // if response > rand(0,1) --> line is disabled
                 if (rd.getValue() > r.nextFloat()) {
 
-                    uniqueId = poleToLine.get(rd.getAssetID());
+                    uniqueId = nodesToLines.get(rd.getAssetID());
 
-                    ns = new ArrayList<>();
-                    ns.add(uniqueId); // line id
-                    damagedLine = nodesmap.get(ns);
-
-                    if (!lineIds.contains(damagedLine)) {
-                        // collect damaged lines
-                        lineIds.add(damagedLine);
-                    }
+                    if(!lineIds.contains(uniqueId)) lineIds.add(uniqueId);
                 }
-            } // end for loop
-
-            scene.setId(String.valueOf(timeCt));
-            scene.setDisable_lines(new ArrayList<>(lineIds));
-            lscenario.add(scene);
+            }
+            createScenarioBlock(lineIds, timeCt);
             timeCt += 1;
 
-        } while (timeCt < numberOfScenarios);
+        }while (timeCt < numberOfScenarios);
 
-        if (clp.isScenarioBlock()){
-            RDTScenarioBlock rsb = new RDTScenarioBlock();
-            rsb.setScenarios(lscenario);
-            writeLpnorm("RDTScenarioBlock.json", rsb);
-        }
-        else{
-            rdt.setScenarios(lscenario);
-            writeLpnorm("RDT_scenario.json", rdt);
+        // create new RDT input
+        ObjectNode nodes = createScenarioBLock();
+        writeLpnorm(RDT_W_SCENARIO,nodes );
+    }
+
+    private static ObjectNode createScenarioBLock(){
+
+        ObjectNode nodes = rdtNodes.deepCopy();
+        String scenarioString = scenarioArray.build().toString();
+        // write out original RDT input with new scenario data
+        try {
+            JsonNode parsedJson = objectMapper.readTree(scenarioString);
+            ObjectNode outerObject = objectMapper.createObjectNode();
+            outerObject.putPOJO("scenarios",parsedJson);
+            nodes.putArray("scenarios");
+            nodes.putPOJO("scenarios", outerObject.findValue("scenarios"));
+        } catch (IOException e) {
+            System.out.println("Could not write scenario block.");
+            e.printStackTrace();
         }
 
+        return nodes;
     }
 
     private static void writeLpnorm(String fileName, Object obj) {
@@ -347,10 +345,5 @@ class RDTWork {
         }
 
     }
-
-    PoleData getPoleData(){
-        return polesData;
-    }
-
 }
 
