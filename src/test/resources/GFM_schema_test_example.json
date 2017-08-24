@@ -1,0 +1,85 @@
+{
+	"assets": [
+		{
+			"id": "pdp1234",
+			"assetClass": "PowerDistributionPole",
+			"assetGeometry": {
+				"type": "Point",
+				"coordinates": [
+					-74.89,
+					38.97
+				]
+			},
+			"properties": {
+                "commCableNumber": 2,
+                "stdDevPoleStrength": 7700000.0,
+                "meanPoleStrength": 38600000.0,
+                "commCableDiameter": 0.04,
+                "powerAttachmentHeight": 5.6388,
+                "powerCableDiameter": 0.0094742,
+                "baseDiameter": 0.22225,
+                "commCableWireDensity": 1500.0,
+                "powerCableNumber": 2,
+                "woodDensity": 500.0,
+                "powerCircuitName": "NAME",
+                "cableSpan": 25.4669,
+                "topDiameter": 0.15361635107,
+                "powerCableWireDensity": 2700.0,
+                "height": 9.144,
+                "commAttachmentHeight": 4.7244			}
+		},
+		{
+			"id": "pdp5678",
+			"assetClass": "PowerDistributionPole",
+			"assetGeometry": {
+				"type": "Point",
+				"coordinates": [
+					-74.90,
+					38.98
+				]
+			},
+			"properties": {
+                "commCableNumber": 2,
+                "stdDevPoleStrength": 7700000.0,
+                "meanPoleStrength": 38600000.0,
+                "commCableDiameter": 0.04,
+                "powerAttachmentHeight": 5.6388,
+                "powerCableDiameter": 0.0094742,
+                "baseDiameter": 0.22225,
+                "commCableWireDensity": 1500.0,
+                "powerCableNumber": 2,
+                "woodDensity": 500.0,
+                "powerCircuitName": "NAME",
+                "cableSpan": 25.4669,
+                "topDiameter": 0.15361635107,
+                "powerCableWireDensity": 2700.0,
+                "height": 9.144,
+                "commAttachmentHeight": 4.7244			}
+		}
+	],
+	"hazardFields": [
+				{
+					"id": "CapeMayMaxWindsAugust2017",
+					"hazardQuantityType": "Windspeed",
+					"rasterFieldData": {
+						"uri": "file:///C:/Users/119751/git/micot-fragility/src/test/resources/windspeedArcTestGrid.asc",
+						"gridFormat": "ArcGrid",
+						"crsCode": "EPSG:4326",
+						"nBands": 1,
+						"rasterBand": 1,
+						"valueType": "double"
+					}
+				}
+	],
+	"responseEstimators": [
+		{
+			"id": "1234",
+			"responseEstimatorClass": "PowerPoleWindStressEstimator",
+			"assetClass": "PowerDistributionPole",
+			"hazardQuantityTypes": ["Windspeed"],
+			"responseQuantityType": "DamageProbability",
+			"properties": {}
+		}
+	]
+
+}
