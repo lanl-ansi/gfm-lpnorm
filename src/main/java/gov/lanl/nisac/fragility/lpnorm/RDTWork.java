@@ -3,14 +3,18 @@ package gov.lanl.nisac.fragility.lpnorm;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import java.io.*;
 import java.net.MalformedURLException;
 import java.util.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.lanl.nisac.fragility.FragilityCommandLineParser;
 import gov.lanl.nisac.fragility.responseModels.IResponse;
+
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
+
 import static gov.lanl.nisac.fragility.lpnorm.PoleConstants.*;
 import static javax.json.Json.createArrayBuilder;
 
@@ -100,7 +104,10 @@ public class RDTWork {
                 nodeLocation.put(sid, new ArrayList<>());
                 nodeLocation.get(sid).add(xValue);
                 nodeLocation.get(sid).add(yValue);
+
             }
+
+            System.out.println(nodeLocation);
 
             // create poles for each line segment
             for (JsonNode n : rdtNodes.findValue("lines")) {
@@ -108,36 +115,49 @@ public class RDTWork {
                 node1 = String.valueOf(n.get("node1_id").asText());
                 node2 = String.valueOf(n.get("node2_id").asText());
 
-                x0 = nodeLocation.get(node1).get(0);
-                y0 = nodeLocation.get(node1).get(1);
+                if (nodeLocation.containsKey(node1) && nodeLocation.containsKey(node2)) {
+                    x0 = nodeLocation.get(node1).get(0);
+                    y0 = nodeLocation.get(node1).get(1);
 
-                // get lat/lon values
-                v1 = nodeLocation.get(node2).get(0) - nodeLocation.get(node1).get(0);
-                v2 = nodeLocation.get(node2).get(1) - nodeLocation.get(node1).get(1);
 
-                ndist = Math.sqrt(v1 * v1 + v2 * v2);
+                    // get lat/lon values
+                    v1 = nodeLocation.get(node2).get(0) - nodeLocation.get(node1).get(0);
+                    v2 = nodeLocation.get(node2).get(1) - nodeLocation.get(node1).get(1);
 
-                // v = (x1,y1) - (x2,y2)
-                // normalized vector u = v  / ||v||
-                // now point distance is along line (x1,y1) + du =
-                v1 = v1 / ndist;
-                v2 = v2 / ndist;
+                    ndist = Math.sqrt(v1 * v1 + v2 * v2);
 
-                // using 111.111 km per degree (or 111,111 meters)
-                // pole spacing at 91 meters 0.000817463169242 degrees
-                // 0.000817463169242
-                numPoles = Math.floor(ndist * DEG_TO_METERS) / POLE_SPACING;
-                numPoles = Math.floor(numPoles);
+                    // v = (x1,y1) - (x2,y2)
+                    // normalized vector u = v  / ||v||
+                    // now point distance is along line (x1,y1) + du =
+                    v1 = v1 / ndist;
+                    v2 = v2 / ndist;
 
-                for (int i = 0; i < numPoles; i++) {
-                    createPoleAsset(id_count, sid, new double[]{x0, y0});
+                    // using 111.111 km per degree (or 111,111 meters)
+                    // pole spacing at 91 meters 0.000817463169242 degrees
+                    // 0.000817463169242
+                    numPoles = Math.floor(ndist * DEG_TO_METERS) / POLE_SPACING;
+                    numPoles = Math.floor(numPoles);
 
-                    // move to next pole location
-                    x0 = x0 + v1 * NEXT_DISTANCE;
-                    y0 = y0 + v2 * NEXT_DISTANCE;
-                    id_count = id_count + 1;
+                    if (numPoles < 1){
+                        System.out.println(" distance between nodes: "+node1+" & "+node2+" is 0.0");
+                        System.out.println(" -- NO POLES created for line: "+sid);
+                    }
+
+                    for (int i = 0; i < numPoles; i++) {
+                        createPoleAsset(id_count, sid, new double[]{x0, y0});
+
+
+                        // move to next pole location
+                        x0 = x0 + v1 * NEXT_DISTANCE;
+                        y0 = y0 + v2 * NEXT_DISTANCE;
+                        id_count = id_count + 1;
+                    }
+
+                } else {
+                    System.out.println(node1+" and/or "+node2+" doesn't exist for line id "+sid+"");
                 }
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -224,15 +244,15 @@ public class RDTWork {
 
         JsonArrayBuilder disabledLines = factory.createArrayBuilder();
 
-        for(String s : lineIds){
+        for (String s : lineIds) {
             disabledLines.add(s);
         }
 
         JsonObject scenarioBlock = factory.createObjectBuilder()
-                .add("id",String.valueOf(id))
+                .add("id", String.valueOf(id))
                 .add("hardened_disabled_lines", factory.createArrayBuilder())
                 .add("disable_lines", disabledLines)
-        .build();
+                .build();
 
         scenarioArray.add(scenarioBlock);
 
@@ -267,7 +287,7 @@ public class RDTWork {
         int timeCt = 0;
         List<String> lineIds;
         Random r = new Random();
-        String uniqueId,lineId, keyId;
+        String uniqueId, lineId, keyId;
 
         HashMap<String, String> nodesToLines = new HashMap<>();
         JsonNode poleAssets = getNewPoles();
@@ -287,7 +307,7 @@ public class RDTWork {
         }
 
         // generating scenarios
-        do{
+        do {
             lineIds = new ArrayList<>();
 
             for (IResponse rd : rspData) {
@@ -296,20 +316,20 @@ public class RDTWork {
 
                     uniqueId = nodesToLines.get(rd.getAssetID());
 
-                    if(!lineIds.contains(uniqueId)) lineIds.add(uniqueId);
+                    if (!lineIds.contains(uniqueId)) lineIds.add(uniqueId);
                 }
             }
             createScenarioBlock(lineIds, timeCt);
             timeCt += 1;
 
-        }while (timeCt < numberOfScenarios);
+        } while (timeCt < numberOfScenarios);
 
         // create new RDT input
         ObjectNode nodes = createScenarioBLock();
-        writeLpnorm(RDT_W_SCENARIO,nodes );
+        writeLpnorm(RDT_W_SCENARIO, nodes);
     }
 
-    private static ObjectNode createScenarioBLock(){
+    private static ObjectNode createScenarioBLock() {
 
         ObjectNode nodes = rdtNodes.deepCopy();
         String scenarioString = scenarioArray.build().toString();
@@ -317,7 +337,7 @@ public class RDTWork {
         try {
             JsonNode parsedJson = objectMapper.readTree(scenarioString);
             ObjectNode outerObject = objectMapper.createObjectNode();
-            outerObject.putPOJO("scenarios",parsedJson);
+            outerObject.putPOJO("scenarios", parsedJson);
             nodes.putArray("scenarios");
             nodes.putPOJO("scenarios", outerObject.findValue("scenarios"));
         } catch (IOException e) {
