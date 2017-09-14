@@ -36,7 +36,6 @@ public final class PoleConstants {
     static final int HAZ_RASTER_BAND = 1;
     static final String HAZ_VALUE_TYPE = "double";
 
-
     // response estimators
     static final String RSP_ID = "PowerPoleWindStressEstimator";
     static final String RSP_ESTIMATOR_CLASS = "PowerPoleWindStressEstimator";

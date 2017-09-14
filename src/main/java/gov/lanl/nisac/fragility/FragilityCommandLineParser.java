@@ -24,6 +24,9 @@ public class FragilityCommandLineParser {
     private String polesInputPath = null;
     private String windFieldInputPath = null;
     private String outputFilePath = null;
+    private String rdtOutputPath = null;
+
+    private boolean hasRdtOutput;
     private boolean hasRdt = false;
     private boolean hasPoles = false;
     private boolean hasWindField = false;
@@ -59,6 +62,8 @@ public class FragilityCommandLineParser {
                 "Number of Scenarios"));
         options.addOption(new Option("sb", "scenarioBlock", false,
                 "Output only RDT scenario block"));
+        options.addOption(new Option("ro", "rdtOut", true,
+                "Output only RDT"));
 
         return options;
     }
@@ -126,6 +131,11 @@ public class FragilityCommandLineParser {
             }
             if (commandLine.hasOption("scenarioBlock")) {
                 scenarioBlock = true;
+            }
+
+            if (commandLine.hasOption("rdtOut")) {
+                hasRdtOutput = true;
+                rdtOutputPath = commandLine.getOptionValue("rdtOut");
             }
         } catch (ParseException exp) {
             printUsage();
@@ -203,5 +213,13 @@ public class FragilityCommandLineParser {
 
     public void setScenarioBlock(boolean scenarioBlock) {
         this.scenarioBlock = scenarioBlock;
+    }
+
+    public boolean isHasRdtOutput() {
+        return hasRdtOutput;
+    }
+
+    public String getRdtOutputPath() {
+        return rdtOutputPath;
     }
 }

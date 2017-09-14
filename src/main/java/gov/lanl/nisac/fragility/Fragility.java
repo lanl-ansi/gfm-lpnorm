@@ -76,7 +76,6 @@ public class Fragility {
 
     private static FragilityCommandLineParser parser;
 
-
     public Fragility() {
     }
 

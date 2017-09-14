@@ -39,12 +39,16 @@ public class RDTWork {
     private static JsonNode newPolesJSON;
     private static JsonNode rdtNodes;
     private static final String RDT_TO_POLES = "RDT-to-Poles.json";
-    private static final String RDT_W_SCENARIO = "rdt_OUTPUT.json";
+    private static String rdtScenarioFile = "rdt_OUTPUT.json";
 
     public RDTWork(String rdtDataFilePath, FragilityCommandLineParser cmdLine) {
 
         clp = cmdLine;
         windFieldPathLocation = clp.getWindFieldInputPath();
+
+        if (clp.isHasRdtOutput()) {
+            rdtScenarioFile = clp.getRdtOutputPath();
+        }
 
         if (clp.isNumScenarios()) {
             numberOfScenarios = clp.getNumberOfScenarios();
@@ -109,50 +113,64 @@ public class RDTWork {
 
             // create poles for each line segment
             for (JsonNode n : rdtNodes.findValue("lines")) {
-                sid = String.valueOf(n.get("id").asText());
-                node1 = String.valueOf(n.get("node1_id").asText());
-                node2 = String.valueOf(n.get("node2_id").asText());
 
-                if (nodeLocation.containsKey(node1) && nodeLocation.containsKey(node2)) {
-                    x0 = nodeLocation.get(node1).get(0);
-                    y0 = nodeLocation.get(node1).get(1);
+                // checking to make sure NOT a transformer
+                boolean xfmrExist = false;
+                JsonNode xmfValue = n.findValue("is_transformer");
 
-
-                    // get lat/lon values
-                    v1 = nodeLocation.get(node2).get(0) - nodeLocation.get(node1).get(0);
-                    v2 = nodeLocation.get(node2).get(1) - nodeLocation.get(node1).get(1);
-
-                    ndist = Math.sqrt(v1 * v1 + v2 * v2);
-
-                    // v = (x1,y1) - (x2,y2)
-                    // normalized vector u = v  / ||v||
-                    // now point distance is along line (x1,y1) + du =
-                    v1 = v1 / ndist;
-                    v2 = v2 / ndist;
-
-                    // using 111.111 km per degree (or 111,111 meters)
-                    // pole spacing at 91 meters 0.000817463169242 degrees
-                    // 0.000817463169242
-                    numPoles = Math.floor(ndist * DEG_TO_METERS) / POLE_SPACING;
-                    numPoles = Math.floor(numPoles);
-
-                    if (numPoles < 1){
-                        System.out.println(" distance between nodes: "+node1+" & "+node2+" is 0.0");
-                        System.out.println(" -- NO POLES created for line: "+sid);
-                    }
-
-                    for (int i = 0; i < numPoles; i++) {
-                        createPoleAsset(id_count, sid, new double[]{x0, y0});
-
-                        // move to next pole location
-                        x0 = x0 + v1 * NEXT_DISTANCE;
-                        y0 = y0 + v2 * NEXT_DISTANCE;
-                        id_count = id_count + 1;
-                    }
-
-                } else {
-                    System.out.println(node1+" and/or "+node2+" doesn't exist for line id "+sid+"");
+                if (xmfValue != null){
+                    xfmrExist = n.get("is_transformer").asBoolean();
                 }
+
+                if (!xfmrExist) {
+
+                    sid = String.valueOf(n.get("id").asText());
+                    node1 = String.valueOf(n.get("node1_id").asText());
+                    node2 = String.valueOf(n.get("node2_id").asText());
+
+                    if (nodeLocation.containsKey(node1) && nodeLocation.containsKey(node2)) {
+                        x0 = nodeLocation.get(node1).get(0);
+                        y0 = nodeLocation.get(node1).get(1);
+
+
+                        // get lat/lon values
+                        v1 = nodeLocation.get(node2).get(0) - nodeLocation.get(node1).get(0);
+                        v2 = nodeLocation.get(node2).get(1) - nodeLocation.get(node1).get(1);
+
+                        ndist = Math.sqrt(v1 * v1 + v2 * v2);
+
+                        // v = (x1,y1) - (x2,y2)
+                        // normalized vector u = v  / ||v||
+                        // now point distance is along line (x1,y1) + du =
+                        v1 = v1 / ndist;
+                        v2 = v2 / ndist;
+
+                        // using 111.111 km per degree (or 111,111 meters)
+                        // pole spacing at 91 meters 0.000817463169242 degrees
+                        // 0.000817463169242
+                        numPoles = Math.floor(ndist * DEG_TO_METERS) / POLE_SPACING;
+                        numPoles = Math.floor(numPoles);
+
+                        if (numPoles < 1) {
+                            System.out.println(" distance between nodes: " + node1 + " & " + node2 + " is 0.0");
+                            System.out.println(" -- NO POLES created for line: " + sid);
+                        }
+
+                        for (int i = 0; i < numPoles; i++) {
+                            createPoleAsset(id_count, sid, new double[]{x0, y0});
+
+                            // move to next pole location
+                            x0 = x0 + v1 * NEXT_DISTANCE;
+                            y0 = y0 + v2 * NEXT_DISTANCE;
+                            id_count = id_count + 1;
+                        }
+
+                    } else {
+                        System.out.println(node1 + " and/or " + node2 + " doesn't exist for line id " + sid + "");
+                    }
+
+                } // if - checked if transformer
+
             }
 
         } catch (IOException e) {
@@ -160,6 +178,7 @@ public class RDTWork {
         }
         System.out.println("Number of poles created: " + id_count);
     }
+
 
     private static void createPoleAsset(int id, String line, double[] coord) {
 
@@ -323,7 +342,7 @@ public class RDTWork {
 
         // create new RDT input
         ObjectNode nodes = createScenarioBLock();
-        writeLpnorm(RDT_W_SCENARIO, nodes);
+        writeLpnorm(rdtScenarioFile, nodes);
     }
 
     private static ObjectNode createScenarioBLock() {
@@ -347,6 +366,7 @@ public class RDTWork {
 
     private static void writeLpnorm(String fileName, Object obj) {
 
+        System.out.println("-=-=-=-=-=" + fileName);
         try {
             FileOutputStream os = new FileOutputStream(fileName);
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(os, obj);
