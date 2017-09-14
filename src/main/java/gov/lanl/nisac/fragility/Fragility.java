@@ -106,15 +106,16 @@ public class Fragility {
             rdtwork = new RDTWork(rdtFilePath, parser);
             JsonNode allNodes = rdtwork.getNewPoles();
 
-            if (allNodes.size() < 1){
+            if (allNodes.get("assets").size() > 1){
                 runFragilityPoles(allNodes);
                 run();
                 outputResults();
                 // produce scenarios TODO
                 rdtwork.generateScenarios(responses);
+            }else{
+                System.out.println(" No assets were created...terminating");
+                System.exit(4);
             }
-
-
 
         } else if (parser.isHasPoles()) {
 

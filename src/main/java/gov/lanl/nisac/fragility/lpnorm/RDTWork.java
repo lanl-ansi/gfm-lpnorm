@@ -107,8 +107,6 @@ public class RDTWork {
 
             }
 
-            System.out.println(nodeLocation);
-
             // create poles for each line segment
             for (JsonNode n : rdtNodes.findValue("lines")) {
                 sid = String.valueOf(n.get("id").asText());
@@ -145,7 +143,6 @@ public class RDTWork {
 
                     for (int i = 0; i < numPoles; i++) {
                         createPoleAsset(id_count, sid, new double[]{x0, y0});
-
 
                         // move to next pole location
                         x0 = x0 + v1 * NEXT_DISTANCE;
