@@ -105,7 +105,7 @@ public class RDTWork {
                 xValue = n.get("x").doubleValue();
                 yValue = n.get("y").doubleValue();
 
-                nodeLocation.put(sid, new ArrayList<>());
+                nodeLocation.put(sid, new ArrayList<Double>());
                 nodeLocation.get(sid).add(xValue);
                 nodeLocation.get(sid).add(yValue);
 
