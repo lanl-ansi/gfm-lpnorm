@@ -2,9 +2,15 @@
 
 [![codecov](https://codecov.io/gh/lanl-ansi/micot-general-fragility/branch/master/graph/badge.svg)](https://codecov.io/gh/lanl-ansi/micot-general-fragility)
 
-# micot-general-fragility
+# gfm-lpnorm
+
+This is a legacy version of the micot-general-fragility model (GFM) to support the LPNORM project and is referred to as gfm-lpnorm.
 
 # Installation
+
+## Compiled
+
+A compiled JAR file is available here [INSERT LOCATION OF COMPILED JAR FILE].
 
 ## Maven Installation
 
@@ -18,3 +24,8 @@ MICOT is distributed as Maven project. To install MICOT as Maven project, follow
 6. Download the repository using the following command ```git clone https://github.com/lanl-ansi/micot-general-fragility.git```
 7. Build and package the code using the command ```mvn -Dmaven.test.skip=true package``` from the top level directory of the git repository
 
+# Usage
+
+You call this JAR from the command line with the following flags:
+
+[INSERT FLAGS]
