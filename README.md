@@ -14,7 +14,7 @@ A compiled JAR file is available here [INSERT LOCATION OF COMPILED JAR FILE].
 
 ## Maven Installation
 
-MICOT is distributed as Maven project. To install MICOT as Maven project, follow these steps
+gfm-lpnorm is distributed as Maven project. To install gfm-lpnorm as Maven project, follow these steps
 
 1. Download [Apache Maven](https://maven.apache.org/download.cgi) and unzip the package into a location of your choice.
 2. Update your PATH variable to point at the bin directory where the "mvn" executable is located
