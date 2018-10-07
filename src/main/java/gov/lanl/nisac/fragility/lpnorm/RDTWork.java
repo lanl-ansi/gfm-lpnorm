@@ -38,26 +38,23 @@ public class RDTWork {
     private static JsonArrayBuilder scenarioArray;
     private static JsonNode newPolesJSON;
     private static JsonNode rdtNodes;
-    private static final String RDT_TO_POLES = "RDT-to-Poles.json";
-    private static String rdtScenarioFile = "rdt_OUTPUT.json";
+    private static String poleOutput = null;
+    private String rdtScenarioFile = null;
 
     public RDTWork(String rdtDataFilePath, FragilityCommandLineParser cmdLine) {
 
         clp = cmdLine;
         windFieldPathLocation = clp.getWindFieldInputPath();
-
-        if (clp.isHasRdtOutput()) {
-            rdtScenarioFile = clp.getRdtOutputPath();
-        }
-
-        if (clp.isNumScenarios()) {
-            numberOfScenarios = clp.getNumberOfScenarios();
-        }
+        rdtScenarioFile = clp.getRdtOutputPath();
+        numberOfScenarios = clp.getNumberOfScenarios();
 
         System.out.println("RDT data option enabled ...");
         initiateProcedure();
         processData(rdtDataFilePath);
-        writePoleData();
+        
+        // create the distribution poles
+        poleOutput = clp.getPolesOutputPath();
+        generatePoleData();
     }
 
     private static void setRdtNodes(JsonNode rdtNodes) {
@@ -216,21 +213,13 @@ public class RDTWork {
 
     private static void createHazardFields() {
 
-        String uriFile = null;
-
-        try {
-            uriFile = String.valueOf(new File(System.getProperty("user.dir")).toURI().toURL());
-        } catch (MalformedURLException e) {
-            System.out.println("couldn't get active directory path");
-            e.printStackTrace();
-        }
-        uriFile = uriFile + windFieldPathLocation;
+        String file = windFieldPathLocation;
 
         JsonObject hazardField = factory.createObjectBuilder()
                 .add("id", HAZ_ID)
                 .add("hazardQuantityType", HAZARD_QUANTITY_TYPE)
                 .add("rasterFieldData", factory.createObjectBuilder()
-                        .add("uri", uriFile)
+                        .add("file", file)
                         .add("gridFormat", HAZ_GRID_FORMAT)
                         .add("crsCode", HAZ_CRS_CODE)
                         .add("nBands", HAZ_NUMBER_OF_BANDS)
@@ -274,17 +263,22 @@ public class RDTWork {
 
     }
 
-    private static void writePoleData() {
+    private static void generatePoleData() {
 
         String jsonString = distributionPoles.build().toString();
 
-        try (FileWriter file = new FileWriter(RDT_TO_POLES)) {
+        try  {
             Object json = objectMapper.readValue(jsonString, Object.class);
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, json);
-            file.close();
-            setNewPoles(objectMapper.readTree(jsonString));
+            setNewPoles(objectMapper.readTree(jsonString));            
 
-        } catch (IOException e) {
+            if (poleOutput != null) {
+            	FileWriter file = new FileWriter(poleOutput);
+            	objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, json);
+            	file.close();
+            }
+
+        } 
+        catch (IOException e) {
             System.out.println("Couldn't write Pole Assets to JSON file.");
             e.printStackTrace();
         }

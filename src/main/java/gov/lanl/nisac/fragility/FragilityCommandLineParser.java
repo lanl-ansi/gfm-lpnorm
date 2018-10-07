@@ -14,27 +14,24 @@ import org.apache.commons.cli.ParseException;
 public class FragilityCommandLineParser {
 
     private static Options options = defineOptions();
-    private String inputPath = null;
-    private String outputPath = null;
-    private String schemaURI = null;
-    private boolean validateInput = false;
-    private boolean exposureOnly = false;
 
     private String rdtInputPath = null;
-    private String polesInputPath = null;
+  //  private String polesInputPath = null;
     private String windFieldInputPath = null;
-    private String outputFilePath = null;
     private String rdtOutputPath = null;
+    private String polesOutputPath = null;
+    private String responseEstimatorOutputPath = null;
+    private String fragilityExposureOutputPath = null;
 
-    private boolean hasRdtOutput;
-    private boolean hasRdt = false;
-    private boolean hasPoles = false;
-    private boolean hasWindField = false;
-    private boolean hasOutputFileName = false;
-    private int numberOfScenarios;
-    private boolean numScenarios = false;
-    private boolean scenarioBlock = false;
+    private int numberOfScenarios = 1;
 
+    public static final String WIND_FIELD_FLAG = "wf";
+    public static final String RDT_INPUT_FLAG = "r";
+    public static final String RDT_OUTPUT_FLAG = "o";
+    public static final String POLES_OUTPUT_FLAG = "po";
+    public static final String RESPONSE_ESTIMATOR_OUTPUT_FLAG = "reo";
+    public static final String FRAGILITY_EXPOSURE_OUTPUT_FLAG = "feo";    
+    public static final String NUM_SCENARIOS_FLAG = "num";
 
     public FragilityCommandLineParser(String[] args) {
         defineOptions();
@@ -43,28 +40,15 @@ public class FragilityCommandLineParser {
 
     private static Options defineOptions() {
         options = new Options();
-        options.addOption(new Option("h", "help", false,
-                "print fragility help"));
-        options.addOption(new Option("s", "schema", true,
-                "validate schema using JSON schema at given URI"));
-        options.getOption("s").setArgName("JSON_SCHEMA_URI");
-        options.addOption(new Option("e", "exposure", false,
-                "evaluate exposure only"));
-        options.addOption(new Option("r", "rdt", true,
-                "RDTJson JSON input"));
-        options.addOption(new Option("p", "poles", true,
-                "pole JSON input"));
-        options.addOption(new Option("wf", "windField", true,
-                "Wind field Esri Ascii input"));
-        options.addOption(new Option("o", "output", true,
-                "output file name"));
-        options.addOption(new Option("num", "numScenario", true,
-                "Number of Scenarios"));
-        options.addOption(new Option("sb", "scenarioBlock", false,
-                "Output only RDT scenario block"));
-        options.addOption(new Option("ro", "rdtOut", true,
-                "Output only RDT"));
-
+        options.addOption(new Option("h", "help", false, "print fragility help"));
+        options.addOption(new Option(FRAGILITY_EXPOSURE_OUTPUT_FLAG, "exposure output", true, "fragility exposure JSON output"));
+        options.addOption(new Option(RDT_INPUT_FLAG, "rdt", true, "RDTJson JSON input"));
+//        options.addOption(new Option("p", "poles input", true, "pole JSON input"));
+        options.addOption(new Option(POLES_OUTPUT_FLAG, "poles output", true, "pole JSON output"));
+        options.addOption(new Option(RESPONSE_ESTIMATOR_OUTPUT_FLAG, "response estimator output", true, "response estimator JSON output"));
+        options.addOption(new Option(WIND_FIELD_FLAG, "windField", true, "Wind field Esri Ascii input"));
+        options.addOption(new Option(RDT_OUTPUT_FLAG, "output", true, "output file name"));
+        options.addOption(new Option(NUM_SCENARIOS_FLAG, "numScenario", true, "Number of Scenarios"));
         return options;
     }
 
@@ -95,48 +79,39 @@ public class FragilityCommandLineParser {
                 System.exit(0);
             }
 
-            schemaURI = null;
-            exposureOnly = false;
-            if (commandLine.hasOption("schema")) {
-                validateInput = true;
-                schemaURI = commandLine.getOptionValue("schema");
-            }
-            if (commandLine.hasOption("exposure")) {
-                exposureOnly = true;
-            }
             // lpnorm --
             if (commandLine.hasOption("rdt")) {
-                hasRdt = true;
                 rdtInputPath = commandLine.getOptionValue("rdt");
             }
 
             if (commandLine.hasOption("num")) {
-                numScenarios = true;
                 numberOfScenarios = Integer.parseInt(commandLine.getOptionValue("num"));
             }
 
             if (commandLine.hasOption("output")) {
-                hasOutputFileName = true;
-                outputFilePath = commandLine.getOptionValue("output");
+                rdtOutputPath = commandLine.getOptionValue("output");
             }
 
-            if (commandLine.hasOption("poles")) {
-                hasPoles = true;
-                polesInputPath = commandLine.getOptionValue("poles");
+    //        if (commandLine.hasOption("poles input")) {
+      //          polesInputPath = commandLine.getOptionValue("poles input");
+        //    }
+            
+            if (commandLine.hasOption("poles output")) {
+                polesOutputPath = commandLine.getOptionValue("poles output");
+            }
+            
+            if (commandLine.hasOption("response estimator output")) {
+                responseEstimatorOutputPath = commandLine.getOptionValue("response estimator output");
+            }
+            
+            if (commandLine.hasOption("exposure output")) {
+                fragilityExposureOutputPath = commandLine.getOptionValue("exposure output");
             }
 
             if (commandLine.hasOption("windField")) {
-                hasWindField = true;
                 windFieldInputPath = commandLine.getOptionValue("windField");
             }
-            if (commandLine.hasOption("scenarioBlock")) {
-                scenarioBlock = true;
-            }
 
-            if (commandLine.hasOption("rdtOut")) {
-                hasRdtOutput = true;
-                rdtOutputPath = commandLine.getOptionValue("rdtOut");
-            }
         } catch (ParseException exp) {
             printUsage();
             System.exit(1);
@@ -147,77 +122,34 @@ public class FragilityCommandLineParser {
         return options;
     }
 
-    public String getInputPath() {
-        return inputPath;
-    }
-
-    public String getOutputPath() {
-        return outputPath;
-    }
-
-    public String getSchemaURI() {
-        return schemaURI;
-    }
-
-    public boolean isValidateInput() {
-        return validateInput;
-    }
-
-    public boolean isExposureOnly() {
-        return exposureOnly;
-    }
-
     public String getRdtInputPath() {
         return rdtInputPath;
     }
 
-    public String getPolesInputPath() {
-        return polesInputPath;
+//    public String getPolesInputPath() {
+  //      return polesInputPath;
+   // }
+    
+    public String getPolesOutputPath() {
+        return polesOutputPath;
+    }
+    
+    public String getResponseEstimatorOutputPath() {
+        return responseEstimatorOutputPath;
+    }
+    
+    public String getFragilityExposureOutputPath() {
+        return fragilityExposureOutputPath;
     }
 
     public String getWindFieldInputPath() {
         return windFieldInputPath;
     }
-
-    public String getOutputFilePath() {
-        return outputFilePath;
-    }
-
-    public boolean isHasRdt() {
-        return hasRdt;
-    }
-
-    public boolean isHasPoles() {
-        return hasPoles;
-    }
-
-    public boolean isHasWindField() {
-        return hasWindField;
-    }
-
-    public boolean isHasOutputFileName() {
-        return hasOutputFileName;
-    }
-
+    
     public int getNumberOfScenarios() {
         return numberOfScenarios;
     }
 
-    public boolean isNumScenarios() {
-        return numScenarios;
-    }
-
-    public boolean isScenarioBlock() {
-        return scenarioBlock;
-    }
-
-    public void setScenarioBlock(boolean scenarioBlock) {
-        this.scenarioBlock = scenarioBlock;
-    }
-
-    public boolean isHasRdtOutput() {
-        return hasRdtOutput;
-    }
 
     public String getRdtOutputPath() {
         return rdtOutputPath;

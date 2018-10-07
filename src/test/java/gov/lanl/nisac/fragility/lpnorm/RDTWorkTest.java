@@ -22,10 +22,12 @@ public class RDTWorkTest {
         cmds[1] = "test_data/rdt_1.json";
         cmds[2] = "-wf";
         cmds[3] = "test_data/windField_example.asc";
+        cmds[4] = "po";
+        cmds[3] = FILE_NAME;
+
 
         System.out.println("go...");
         FragilityCommandLineParser cmdLine = new FragilityCommandLineParser(cmds);
-        System.out.println(cmdLine.isHasWindField());
 
         new RDTWork("test_data/rdt_1.json", cmdLine);
 

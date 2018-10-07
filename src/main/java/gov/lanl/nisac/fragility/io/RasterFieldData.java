@@ -4,7 +4,7 @@ package gov.lanl.nisac.fragility.io;
 
 public class RasterFieldData {
 	
-	private String uri;
+	private String file;
 	private String gridFormat;
 	private String crsCode = "EPSG:4326";
 	private int nBands;
@@ -13,12 +13,12 @@ public class RasterFieldData {
 	
 	public RasterFieldData() {}
 
-	public String getUri() {
-		return uri;
+	public String getFile() {
+		return file;
 	}
 
-	public void setUri(String uri) {
-		this.uri = uri;
+	public void setFile(String file) {
+		this.file = file;
 	}
 
 	public String getGridFormat() {

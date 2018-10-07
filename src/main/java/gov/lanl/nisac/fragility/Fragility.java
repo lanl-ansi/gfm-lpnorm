@@ -68,20 +68,16 @@ public class Fragility {
     private static final JsonFactory jsonFactory = new JsonFactory();
     private static final ResponseEstimatorFactory estimatorFactory = new ResponseEstimatorFactory();
     private static String schemaURI = null;
-    private static boolean includeExposure = false;
-    private static boolean outputTxt = false;
     private static boolean validateInput = false;
-    private static final String FRAGILITY_EXP = "FRAGILITY_Exposures.json";
-    private static final String FRAGILITY_RSP = "FRAGILITY_ResponseEstimators.json";
-
+    private static String fragilityRSPPath = null;
+    private static String fragilityExposurePath = null;
+    
     private static FragilityCommandLineParser parser;
 
     public Fragility() {
     }
 
     public static void main(String[] args) {
-        System.out.println(args.length);
-
         checkOptions(args);
         System.out.println("Analysis complete.");
     }
@@ -89,18 +85,30 @@ public class Fragility {
     private static void checkOptions(String[] args) {
         // Parse the command line.
         parser = new FragilityCommandLineParser(args);
-        RDTWork rdtwork;
+        RDTWork rdtwork = null;
 
-        if (parser.isExposureOnly()) includeExposure = true;
-        if (parser.isHasOutputFileName()) outputTxt = true;
+        // Program 1 - The standard GFM to RDT program
+//        if (parser.isHasRdt()) {
 
-        if (parser.isHasRdt()) {
-
-            if (!parser.isHasWindField()) {
-                System.out.println("Missing the hazard field option -wf ...");
+            if (parser.getWindFieldInputPath() == null) {
+                System.out.println("Missing the hazard field option -" + FragilityCommandLineParser.WIND_FIELD_FLAG + " ...");
+                System.exit(0);
+            }
+            
+            if (parser.getRdtInputPath() == null) {
+                System.out.println("Missing the power system input file (RDT format) option -" + FragilityCommandLineParser.RDT_INPUT_FLAG + " ...");
                 System.exit(0);
             }
 
+            if (parser.getRdtOutputPath() == null) {
+                System.out.println("Missing the RDT output file option -" + FragilityCommandLineParser.RDT_OUTPUT_FLAG + " ...");
+                System.exit(0);
+            }            
+            
+            fragilityRSPPath = parser.getResponseEstimatorOutputPath();
+            fragilityExposurePath = parser.getFragilityExposureOutputPath();
+
+            
             String rdtFilePath = parser.getRdtInputPath();
             rdtwork = new RDTWork(rdtFilePath, parser);
             JsonNode allNodes = rdtwork.getNewPoles();
@@ -108,25 +116,30 @@ public class Fragility {
             if (allNodes.get("assets").size() > 1){
                 runFragilityPoles(allNodes);
                 run();
-                outputResults();
+                generateResults();
                 // produce scenarios TODO
                 rdtwork.generateScenarios(responses);
-            }else{
+                // should probably exit here
+                
+                
+            }
+            else{
                 System.out.println(" No assets were created...terminating");
                 System.exit(4);
             }
+        //} 
+        // Program 2 - Does something else
+  //      else if (parser.isHasPoles()) {
 
-        } else if (parser.isHasPoles()) {
-
-            System.out.println("Poles only option . . .");
-            if (parser.isHasWindField()) {
-                System.out.println("Wind field option is not used for -p option");
-            }
-            String poleFilePath = parser.getPolesInputPath();
-            runFragility(poleFilePath);
-            run();
-            outputResults();
-        }
+    //        System.out.println("Poles only option . . .");
+      //      if (parser.isHasWindField()) {
+        //        System.out.println("Wind field option is not used for -p option");
+        //    }
+           // String poleFilePath = parser.getPolesInputPath();
+       //    runFragility(poleFilePath);
+           // run();
+           // outputResults();
+        //}
     }
 
     private static void runFragility(String inputFile) {
@@ -209,7 +222,7 @@ public class Fragility {
     private static void run() {
         responses = responseEngine.execute(assetDataStore, hazardFieldDataStore, responseEstimatorDataStore);
 
-        if (includeExposure) {
+        if (fragilityExposurePath != null) {
             IExposureEngine exposureEngine = new DefaultExposureEngine();
             IExposureEvaluator exposureEvaluator = new PointExposureEvaluator();
             exposures = exposureEngine.execute(assetDataStore, hazardFieldDataStore, exposureEvaluator);
@@ -217,12 +230,12 @@ public class Fragility {
 
     }
 
-    private static void outputResults() {
+    private static void generateResults() {
         // Output the response data.
-        writeJSONResponseOutput();
+        generateResponseOutput();
         System.out.println(" -- Asset responses written.");
 
-        if (includeExposure) {
+        if (fragilityExposurePath != null) {
             // Output the exposure data.
             writeJSONExposureOutput();
             System.out.println(" -- Asset exposures written.");
@@ -331,16 +344,18 @@ public class Fragility {
                 exposureData[i] = data;
             }
 
-            FileOutputStream os = new FileOutputStream(FRAGILITY_EXP);
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(os, exposureData);
-            os.close();
+            if (fragilityExposurePath != null) {
+            	FileOutputStream os = new FileOutputStream(fragilityExposurePath);
+            	objectMapper.writerWithDefaultPrettyPrinter().writeValue(os, exposureData);
+            	os.close();
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static void writeJSONResponseOutput() {
+    private static void generateResponseOutput() {
         try {
             int nResponses = responses.size();
             ResponseData[] responseData = new ResponseData[nResponses];
@@ -355,10 +370,14 @@ public class Fragility {
                 data.setValue(response.getValue());
                 responseData[i] = data;
             }
-            FileOutputStream os = new FileOutputStream(FRAGILITY_RSP);
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(os, responseData);
-            os.close();
-        } catch (IOException e) {
+            
+            if (fragilityRSPPath != null) {
+            	FileOutputStream os = new FileOutputStream(fragilityRSPPath);
+            	objectMapper.writerWithDefaultPrettyPrinter().writeValue(os, responseData);
+            	os.close();
+            }
+        } 
+        catch (IOException e) {
             e.printStackTrace();
         }
     }

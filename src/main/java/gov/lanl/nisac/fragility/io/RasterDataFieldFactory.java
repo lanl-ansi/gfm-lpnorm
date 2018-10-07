@@ -14,8 +14,7 @@ public class RasterDataFieldFactory extends RasterFieldFactory{
 	public static RasterField createRasterField(RasterFieldData rasterFieldData){
 		RasterField rasterField;
 
-		URI uri = URI.create(rasterFieldData.getUri());
-		File input = new File(uri);
+		File input = new File(rasterFieldData.getFile());
 
 		String format = rasterFieldData.getGridFormat();
 		RasterFieldFormat fieldFormat = null;
