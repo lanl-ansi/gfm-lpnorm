@@ -36,7 +36,6 @@ java -jar gfm-lpnorm.jar
 You call this JAR from the command line with the following flags
  
 ```code
-
 required arguments:
   -wf              path to the wind field Esri Ascii input file
   -r               path to the power system input file (RDT format)
