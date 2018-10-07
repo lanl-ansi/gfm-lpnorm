@@ -4,13 +4,15 @@
 
 # gfm-lpnorm
 
-This is a legacy version of the micot-general-fragility model (GFM) to support the LPNORM project and is referred to as gfm-lpnorm.
+This is a legacy version of the micot-general-fragility model (GFM) to support the LPNORM project and is referred to as gfm-lpnorm. The current GFM is found in [repository](https://github.com/lanl-ansi/generalized-fragility-model). The support for this version of LPNORM will mingrate to the current GFM at a future date.
 
 # Installation
 
 ## Compiled
 
-A compiled JAR file is available here [INSERT LOCATION OF COMPILED JAR FILE].
+A compiled JAR file is found in [target/gfm-lpnorm-0.1.jar](https://github.com/lanl-ansi/micot-general-fragility/blob/master/target/gfm-lpnorm-0.1.jar)
+
+A compiled runnable jar file is found in [target/gfm-lpnorm.jar](https://github.com/lanl-ansi/micot-general-fragility/blob/master/target/gfm-lpnorm.jar)
 
 ## Maven Installation
 
@@ -26,6 +28,11 @@ gfm-lpnorm is distributed as Maven project. To install gfm-lpnorm as Maven proje
 
 # Usage
 
+The runnable jar file is executed with the command
+
+```code
+java -jar gfm-lpnorm.jar
+```
 You call this JAR from the command line with the following flags:
 
 [INSERT FLAGS]
