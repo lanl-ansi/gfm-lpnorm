@@ -41,14 +41,14 @@ public class FragilityCommandLineParser {
     private static Options defineOptions() {
         options = new Options();
         options.addOption(new Option("h", "help", false, "print fragility help"));
-        options.addOption(new Option(FRAGILITY_EXPOSURE_OUTPUT_FLAG, "exposure output", true, "fragility exposure JSON output"));
-        options.addOption(new Option(RDT_INPUT_FLAG, "rdt", true, "RDTJson JSON input"));
+        options.addOption(new Option(FRAGILITY_EXPOSURE_OUTPUT_FLAG, "exposure_output", true, "[optional] fragility exposure output path"));
+        options.addOption(new Option(RDT_INPUT_FLAG, "rdt", true, "RDTJson input path"));
 //        options.addOption(new Option("p", "poles input", true, "pole JSON input"));
-        options.addOption(new Option(POLES_OUTPUT_FLAG, "poles output", true, "pole JSON output"));
-        options.addOption(new Option(RESPONSE_ESTIMATOR_OUTPUT_FLAG, "response estimator output", true, "response estimator JSON output"));
-        options.addOption(new Option(WIND_FIELD_FLAG, "windField", true, "Wind field Esri Ascii input"));
-        options.addOption(new Option(RDT_OUTPUT_FLAG, "output", true, "output file name"));
-        options.addOption(new Option(NUM_SCENARIOS_FLAG, "numScenario", true, "Number of Scenarios"));
+        options.addOption(new Option(POLES_OUTPUT_FLAG, "poles_output", true, "[optional] pole data output path"));
+        options.addOption(new Option(RESPONSE_ESTIMATOR_OUTPUT_FLAG, "response_estimator_output", true, "[optional] response estimator output path"));
+        options.addOption(new Option(WIND_FIELD_FLAG, "windField", true, "Wind field Esri Ascii input path"));
+        options.addOption(new Option(RDT_OUTPUT_FLAG, "output", true, "damage output file path"));
+        options.addOption(new Option(NUM_SCENARIOS_FLAG, "numScenario", true, "[optional] number of scenarios, default is 1"));
         return options;
     }
 
@@ -56,12 +56,12 @@ public class FragilityCommandLineParser {
         HelpFormatter formatter = new HelpFormatter();
         StringWriter swriter = new StringWriter();
         PrintWriter writer = new PrintWriter(swriter);
-        String header = "fragility  [OPTIONS]\n options:\n";
+        String header = "gfm-lpnorm  [OPTIONS]\n options:\n";
         String footer =
-                "\nExamples:\n\nFragility.jar  -r <RDT_path.json> -o <output.json>\n\n" +
-                        "Fragility.jar -p <Poles_input> -o <output> --schema http://org.lanl.fragility/schemas/fragilitySchema.json \n\n" +
-                        "Fragility.jar -r <RDT_path> -wf <windHazard_path> -o <RDT_output> \n\n";
-        System.out.println(swriter.toString());
+                "\nExamples:\n\njava -jar gfm-lpnorm.jar  -wf <RDT_input_path.asc> -r <RDT_input_path.json> -o <output.json>\n\n" +
+                		"java -jar gfm-lpnorm.jar  -wf <RDT_input_path.asc> -r <RDT_input_path.json> -o <output.json> -num 5 \n\n";
+        formatter.printHelp("gfm-lpnorm", header, options, footer, true);
+        
     }
 
     private void parse(String[] args) {
@@ -96,16 +96,16 @@ public class FragilityCommandLineParser {
       //          polesInputPath = commandLine.getOptionValue("poles input");
         //    }
             
-            if (commandLine.hasOption("poles output")) {
-                polesOutputPath = commandLine.getOptionValue("poles output");
+            if (commandLine.hasOption("poles_output")) {
+                polesOutputPath = commandLine.getOptionValue("poles_output");
             }
             
-            if (commandLine.hasOption("response estimator output")) {
-                responseEstimatorOutputPath = commandLine.getOptionValue("response estimator output");
+            if (commandLine.hasOption("response_estimator_output")) {
+                responseEstimatorOutputPath = commandLine.getOptionValue("response_estimator_output");
             }
             
-            if (commandLine.hasOption("exposure output")) {
-                fragilityExposureOutputPath = commandLine.getOptionValue("exposure output");
+            if (commandLine.hasOption("exposure_output")) {
+                fragilityExposureOutputPath = commandLine.getOptionValue("exposure_output");
             }
 
             if (commandLine.hasOption("windField")) {
