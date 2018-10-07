@@ -1,14 +1,8 @@
-[![Build Status](https://travis-ci.org/lanl-ansi/micot-general-fragility.svg?branch=master)](https://travis-ci.org/lanl-ansi/micot-general-fragility)
-
-[![codecov](https://codecov.io/gh/lanl-ansi/micot-general-fragility/branch/master/graph/badge.svg)](https://codecov.io/gh/lanl-ansi/micot-general-fragility)
-
-# gfm-lpnorm
+## gfm-lpnorm Introduction
 
 This is a legacy version of the micot-general-fragility model (GFM) to support the LPNORM project and is referred to as gfm-lpnorm. The current GFM is found in [repository](https://github.com/lanl-ansi/generalized-fragility-model). The support for this version of LPNORM will mingrate to the current GFM at a future date.
 
-# Installation
-
-## Compiled
+## Compiled JAR Installation Installation
 
 A compiled JAR file is found in [target/gfm-lpnorm-0.1.jar](https://github.com/lanl-ansi/micot-general-fragility/blob/master/target/gfm-lpnorm-0.1.jar)
 
@@ -26,7 +20,7 @@ gfm-lpnorm is distributed as Maven project. To install gfm-lpnorm as Maven proje
 6. Download the repository using the following command ```git clone https://github.com/lanl-ansi/micot-general-fragility.git```
 7. Build and package the code using the command ```mvn -Dmaven.test.skip=true package``` from the top level directory of the git repository
 
-# Usage
+## Usage
 
 The runnable jar file is executed with the command
 
@@ -47,3 +41,9 @@ optional arguments:
   -feo             path to the fragility exposure output file
   -num             number of scenarios to generate in the damage output file (default is 1)
 ```
+
+## Continuous Integration
+
+[![Build Status](https://travis-ci.org/lanl-ansi/micot-general-fragility.svg?branch=master)](https://travis-ci.org/lanl-ansi/micot-general-fragility)
+
+[![codecov](https://codecov.io/gh/lanl-ansi/micot-general-fragility/branch/master/graph/badge.svg)](https://codecov.io/gh/lanl-ansi/micot-general-fragility)
