@@ -4,7 +4,7 @@
 
 # gfm-lpnorm
 
-This is a legacy version of the micot-general-fragility model (GFM) to support the LPNORM project and is referred to as gfm-lpnorm. The current GFM is found in https://github.com/lanl-ansi/generalized-fragility-model. The support for this version of LPNORM will mingrate to the current GFM at a future date.
+This is a legacy version of the micot-general-fragility model (GFM) to support the LPNORM project and is referred to as gfm-lpnorm. The current GFM is found in [repository](https://github.com/lanl-ansi/generalized-fragility-model). The support for this version of LPNORM will mingrate to the current GFM at a future date.
 
 # Installation
 
