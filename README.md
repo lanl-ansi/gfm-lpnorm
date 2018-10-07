@@ -33,6 +33,18 @@ The runnable jar file is executed with the command
 ```code
 java -jar gfm-lpnorm.jar
 ```
-You call this JAR from the command line with the following flags:
+You call this JAR from the command line with the following flags
+ 
+```code
 
-[INSERT FLAGS]
+required arguments:
+  -wf              path to the wind field Esri Ascii input file
+  -r               path to the power system input file (RDT format)
+  -o               path to the damage output file (RDT format)
+
+optional arguments:
+  -po              path to the poles output file
+  -reo             path to the response estimator output file
+  -feo             path to the fragility exposure output file
+  -num             number of scenarios to generate in the damage output file (default is 1)
+```
