@@ -1,11 +1,16 @@
 *.class
 
 # directories #
-/target/
+/target/archive-tmp/
+/target/classes/
+/target/generated-sources/
+/target/maven-archiver/
+/target/test-classes/
+
+
 /.idea/
 
 # Package Files #
-*.jar
 *.war
 *.impl
 *.log
