@@ -4,10 +4,7 @@ This is a custom version of the [micot-general-fragility model (GFM)](https://gi
 
 ## Compiled JAR Installation Installation
 
-gfm-lpnorm may be used in two ways.  
-
-1. gfm-lpnorm may be used as a compiled library that may be integrated directly into other java programs. The compiled JAR file is found in [target/gfm-lpnorm-0.1.jar](https://github.com/lanl-ansi/micot-general-fragility/blob/master/target/gfm-lpnorm-0.1.jar)
-2. gfm-lpnorm may be used as a standalone, commmand line program. The compiled, runnable jar file is found in [target/gfm-lpnorm.jar](https://github.com/lanl-ansi/micot-general-fragility/blob/master/target/gfm-lpnorm.jar). See the section on usuage for instructions on how execute the command line program.
+gfm-lpnorm is used as a standalone, commmand line program. The compiled, runnable jar file is found in [target/gfm-lpnorm.jar](https://github.com/lanl-ansi/micot-general-fragility/blob/master/target/gfm-lpnorm.jar). See the section on usuage for instructions on how execute the command line program.
 
 ## Maven Installation
 
