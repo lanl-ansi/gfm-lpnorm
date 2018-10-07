@@ -6,6 +6,7 @@
 /target/generated-sources/
 /target/maven-archiver/
 /target/test-classes/
+/target/gfm-lpnorm-0.1.jar
 
 
 /.idea/
