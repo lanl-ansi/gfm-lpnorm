@@ -10,7 +10,7 @@ This is a legacy version of the micot-general-fragility model (GFM) to support t
 
 ## Compiled
 
-A compiled JAR file is found in target/gfm-lpnorm-0.1.jar
+A compiled JAR file is found in [target/gfm-lpnorm-0.1.jar](https://github.com/lanl-ansi/micot-general-fragility/blob/master/target/gfm-lpnorm-0.1.jar)
 
 A compiled runnable jar file is found in target/gfm-lpnorm.jar
 
