@@ -33,6 +33,7 @@ import gov.lanl.nisac.fragility.responseEstimators.AbstractResponseEstimator;
 import gov.lanl.nisac.fragility.responseEstimators.ResponseEstimatorFactory;
 import gov.lanl.nisac.fragility.responseModels.IResponse;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -282,7 +283,7 @@ public class Fragility {
                     RasterFieldData rasterFieldData = hazardFieldData.getRasterFieldData();
                     RasterField rasterField = RasterDataFieldFactory.createRasterField(rasterFieldData);
                     IHazardField hazardField = new HazardField(id, hazardQuantityType, rasterField);
-                    hazardFieldDataStore.addHazardField(hazardField);
+                    hazardFieldDataStore.addHazardField(hazardField);                    
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

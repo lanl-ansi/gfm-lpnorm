@@ -160,4 +160,7 @@ public class RasterField implements IField {
                 (y > ymin) && (y < ymax);
     }
 
+    public GridCoverage2D getCoverage() {
+    	return gridCoverage;
+    }
 }
