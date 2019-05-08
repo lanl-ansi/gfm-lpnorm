@@ -113,13 +113,19 @@ public class RDTWork {
 
                 // checking to make sure NOT a transformer
                 boolean xfmrExist = false;
+                boolean isnew = false;
                 JsonNode xmfValue = n.findValue("is_transformer");
+                JsonNode isnewValue = n.findValue("is_new");
 
                 if (xmfValue != null){
                     xfmrExist = n.get("is_transformer").asBoolean();
                 }
+                if (isnewValue != null){
+                    isnew = n.get("is_new").asBoolean();
+                }
 
-                if (!xfmrExist) {
+                
+                if (!xfmrExist && !isnew) {
 
                     sid = String.valueOf(n.get("id").asText());
                     node1 = String.valueOf(n.get("node1_id").asText());
